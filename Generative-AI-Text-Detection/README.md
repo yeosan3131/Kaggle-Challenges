@@ -120,7 +120,7 @@ flowchart LR
 대회 당시 노트북은 **Python 3.11.11**, **PyTorch 2.6.0**, **PyTorch Lightning 2.5.1** 환경에서 실행했습니다.
 
 ```bash
-git clone https://github.com/dbsrhks85/2025-hallym-ai-text-detection.git
+git clone https://github.com/yeosan3131/Kaggle-Challenges/tree/main/Generative-AI-Text-Detection
 cd 2025-hallym-ai-text-detection
 pip install -r requirements.txt
 jupyter lab hallym_ai_text_detection.ipynb
