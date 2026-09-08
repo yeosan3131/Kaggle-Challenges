@@ -1,93 +1,134 @@
-# Generation AI Text Detection Pipeline
+<h1 align="center">🤖 2025 Hallym AI Text Detection</h1>
+<h3 align="center">2025학년도 한림대학교 디지털 경진대회 은상 수상작</h3>
+<p align="center"><strong>KLUE RoBERTa를 활용한 한국어 AI 생성 텍스트 탐지</strong></p>
 
-> **교내 AI 데이터 분석 및 머신러닝 공모전 수상 (Private F1-Score: 1.00)**  
-> 본 프로젝트는 생성형 AI가 생성한 텍스트와 사람이 작성한 텍스트 말뭉치(Corpus)를 정밀 정제하고, 일반화 성능을 극대화하여 분류하는 딥러닝 파이프라인 아키텍처입니다.
+<p align="center">
+<img src="https://img.shields.io/badge/Award-Silver-C0C0C0?style=for-the-badge" alt="Silver Award">
+<img src="https://img.shields.io/badge/Best_Fold_F1-1.0000-00B894?style=for-the-badge" alt="Best Fold F1 1.0000">
+<img src="https://img.shields.io/badge/5--Fold_Mean-0.9790-6C5CE7?style=for-the-badge" alt="5-Fold Mean 0.9790">
+</p>
 
----
-
-## 핵심 역량 및 기술적 접근 (Key Highlights)
-
-- **비정형 데이터 엔지니어링:** 노이즈 레벨이 높고 클래스 불균형(Imbalance)이 심한 텍스트 데이터를 정제하고, 임베딩 레이어의 연산 효율성을 고려한 토큰 크기(Token Max Length) 최적화
-- **하이퍼파라미터 튜닝 최적화:** RoBERTa-Large 구조 하에서 수렴 가속화를 위해 `AdamP` 옵티마이저 및 Cosine Annealing Learning Rate Scheduler 도입
-- **완벽한 실험 재현성 (100% Reproducibility):** `seed_everything()`을 구축하여 데이터 셔플, 모델 가중치 초기화 등 딥러닝 학습의 무작위성을 완전히 통제
-- **검증 및 앙상블 전략:** Public 점수에 의존하지 않는 Stratified 5-Fold Cross-Validation 구축 및 도메인 편향을 고려한 **휴리스틱 폴드 선별 앙상블 기법** 적용
-
----
-
-## Tech Stacks
-
-- **Language:** Python 3.11
-- **Framework & Libraries:** PyTorch, Transformers, HuggingFace, Scikit-Learn, Pandas, NumPy
-- **Optimization:** AdamP
+<p align="center">
+<img src="https://img.shields.io/badge/Python-3.11.11-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python">
+<img src="https://img.shields.io/badge/PyTorch-2.6.0-EE4C2C?style=flat-square&logo=pytorch&logoColor=white" alt="PyTorch">
+<img src="https://img.shields.io/badge/Transformers-KLUE_RoBERTa-FFD21E?style=flat-square&logo=huggingface&logoColor=black" alt="Transformers">
+<img src="https://img.shields.io/badge/Lightning-2.5.1-792EE5?style=flat-square&logo=lightning&logoColor=white" alt="PyTorch Lightning">
+</p>
 
 ---
 
-## Directory Structure
+## 🎯 Project Overview
 
-```text
-├── src/
-│   └── k1-0000.ipynb        # 데이터 전처리, 모델 설계, 학습 및 추론 통합 파이프라인
-├── submission/
-│   └── 245_submit.csv       # 최종 수렴된 선별 폴드 앙상블 제출 파일
-└── README.md                # 프로젝트 리포트
+주어진 한국어 텍스트가 **사람이 작성한 글인지, AI가 생성한 글인지**를 판별하는 이진 분류 프로젝트입니다. `klue/roberta-large`를 파인튜닝하고 Stratified 5-Fold 교차 검증과 예측 앙상블을 적용했습니다.
+
+| 🏆 Award | 🎯 Task | 📊 Metric | 🧠 Backbone |
+|:---:|:---:|:---:|:---:|
+| **은상** | Binary Text Classification | F1-score | KLUE RoBERTa Large |
+
+### Competition
+
+| Item | Details |
+|---|---|
+| 대회명 | 2025학년도 한림대학교 디지털 경진대회 |
+| 주최 | 한림대학교 SW중심대학사업단 |
+| 대회 기간 | 2025.05.13 ~ 2025.05.26 |
+| 평가 지표 | F1-score |
+| 수상 | **은상** |
+
+### Labels
+
+| Label | Meaning |
+|:---:|---|
+| `0` | 👤 사람이 작성한 텍스트 |
+| `1` | 🤖 AI가 생성한 텍스트 |
+
+---
+
+## ⚙️ Model Pipeline
+
+```mermaid
+flowchart LR
+    A["한국어 텍스트"] --> B["Tokenizer<br/>Max Length 512"]
+    B --> C["KLUE<br/>RoBERTa Large"]
+    C --> D["CLS Token<br/>Representation"]
+    D --> E["Dropout + Linear"]
+    E --> F["SwiGLU"]
+    F --> G["Binary Classifier"]
+    G --> H["AI 생성 확률"]
+
+    style A fill:#E8F4FD,stroke:#3776AB,color:#111
+    style C fill:#FFE8E1,stroke:#EE4C2C,color:#111
+    style F fill:#FFF5CC,stroke:#E0A800,color:#111
+    style H fill:#E5F8F2,stroke:#00B894,color:#111
 ```
 
+### Training Strategy
+
+| Component | Configuration |
+|---|---|
+| Text encoder | `klue/roberta-large` |
+| Classification head | Dropout → Linear → SwiGLU → Dropout → Linear |
+| Input | CLS token representation |
+| Maximum sequence length | 512 |
+| Batch size | 8 |
+| Epochs | 5 |
+| Optimizer | AdamW |
+| Learning rate | `2e-5` |
+| Loss | BCEWithLogitsLoss |
+| Validation | Stratified 5-Fold |
+| Validation metric | Macro F1-score |
+
 ---
 
-## 검증 및 엔지니어링 전략 (Validation & Ensemble Strategy)
+## 📈 Validation Results
 
-### 1. Robust Validation (Stratified 5-Fold)
+| Fold | Macro F1-score |
+|:---:|---:|
+| 1 | 0.9634 |
+| 2 | 0.9940 |
+| 3 | 0.9756 |
+| 4 | 0.9622 |
+| **5** | **1.0000** 🎯 |
+| **5-Fold Mean** | **0.9790 ± 0.0155** |
 
-텍스트 데이터 특성상 Public 리더보드 점수에만 의존할 경우 Target 데이터셋에 과적합(Overfitting)될 리스크가 매우 컸습니다. 이를 방지하기 위해 정교한 Stratified 5-Fold 교차 검증 파이프라인을 연동하여 매 학습마다 데이터 분포의 일관성을 유지하고 모델의 일반화 성능을 객관적으로 검증했습니다.
-
-### 2. 휴리스틱 폴드 선택(Heuristic Fold Selection) 앙상블 전략
-
-본 레포지토리의 최종 추론(Inference) 단계에서는 정석적인 전체 폴드 평균(Simple OOF Mean) 대신, 학습 과정에서 모니터링한 **Validation Metric의 추이를 기반으로 특정 폴드를 선별 결합하는 전략**을 취했습니다.
-
-- **Fold 2 (Index 1) 배제 근거:** Fold 2 학습 과정에서 타 폴드 대비 Validation Loss의 진동폭이 임계치를 초과하여 발생했으며, 특정 노이즈 도메인 텍스트에 편향(Bias)되어 수렴하는 정황을 Traceback 로그로 식별했습니다.
-- **최종 적용 메커니즘:** 데이터 오염 가능성이 높은 Fold 2를 과감히 배제하고, 가장 안정적으로 수렴하여 최적의 오차 범위 내에 도달한 대리 모델들(**Fold 1, 3, 4, 5** / 코드상 인덱스 제어 및 주석 가이드 반영)만 선별 조합했습니다.
-- **수행 결과:** 정석적인 OOF 방식보다 모델의 편향을 정밀하게 제어할 수 있었으며, 결과적으로 **Private F1-Score 1.00**이라는 무결점의 최적 일반화 성능을 증명해 냈습니다.
+> [!NOTE]
+> **Best Fold Macro F1-score 1.0000**을 기록했습니다. 전체 5-Fold 평균은 **0.9790 ± 0.0155**이며, 위 수치는 대회 당시 실행한 노트북에 저장된 교차 검증 결과입니다.
 
 ---
 
-## 💻 핵심 구현 기능 (Code Snippets)
+## 🗂️ Repository
 
-### 🔹 실험 재현성 제어 (Reproducibility)
+| File | Description |
+|---|---|
+| [**`hallym_ai_text_detection.ipynb`**](./hallym_ai_text_detection.ipynb) | 데이터 전처리, 모델 학습, 교차 검증, 예측 및 제출 파일 생성 |
+| [**`result.csv`**](./result.csv) | 대회 최종 예측 결과 |
+| [**`requirements.txt`**](./requirements.txt) | Python 패키지 의존성 |
 
-배치 셔플링 및 하드웨어 연산의 불확실성을 통제하여 언제 어디서나 100% 동일한 실험 결과가 도출되도록 환경을 고정했습니다.
+### Final Result
 
-```python
-def seed_everything(seed=42):
-    random.seed(seed)
-    os.environ['PYTHONHASHSEED'] = str(seed)
+`result.csv`는 대회 최종 제출 파일을 GitHub 공개용 이름으로 정리한 것입니다. 500개 테스트 텍스트의 예측을 `id,label` 형식으로 저장합니다.
 
-    np.random.seed(seed)
+| Predicted label | Count | Ratio |
+|:---:|---:|---:|
+| `0` Human | 400 | 80% |
+| `1` AI | 100 | 20% |
 
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed(seed)
+---
 
-    torch.backends.cudnn.deterministic = True
+## 🚀 Getting Started
+
+대회 당시 노트북은 **Python 3.11.11**, **PyTorch 2.6.0**, **PyTorch Lightning 2.5.1** 환경에서 실행했습니다.
+
+```bash
+git clone https://github.com/dbsrhks85/2025-hallym-ai-text-detection.git
+cd 2025-hallym-ai-text-detection
+pip install -r requirements.txt
+jupyter lab hallym_ai_text_detection.ipynb
 ```
 
----
-
-### 🔹 선별적 앙상블 레이어 (Heuristic Ensemble)
-
-```python
-# Average predictions across specific folds based on validation analysis
-
-selected_folds = [3, 1, 4]  # Validation 성능 추이에 근거한 수렴 최적화 폴드 인덱스 선택
-
-selected_preds = [preds_list[i] for i in selected_folds]
-
-final_preds = np.mean(selected_preds, axis=0)
-
-final_binary_preds = (final_preds > 0.5).astype(int)
-```
+> [!IMPORTANT]
+> 학습과 테스트에 사용된 대회 제공 데이터는 이 저장소에 포함되지 않습니다.
 
 ---
 
-## 🏆 대회 성과 (Result)
-
-- 교내 AI 데이터 분석 및 머신러닝 경쟁 프로젝트 상위권 랭크 및 수상
-- 최종 평가 (Private Leaderboard) F1-Score 1.00 달성
+<p align="center"><strong>2025 Hallym Digital Competition · Silver Award</strong></p>
